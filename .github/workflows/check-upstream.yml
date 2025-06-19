@@ -1,0 +1,55 @@
+name: Check upstream
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Get latest upstream commit hash
+        run: |
+          git ls-remote https://github.com/qjfoidnh/BaiduPCS-Go.git refs/heads/main | cut -f1 > latest_hash.txt
+          echo "LATEST_HASH=$(cat latest_hash.txt)" >> $GITHUB_ENV
+
+      - name: Compare with last recorded hash
+        id: check
+        run: |
+          HASH_FILE=".upstream_hash"
+          if [ -f "$HASH_FILE" ]; then
+            LAST_HASH=$(cat "$HASH_FILE")
+          else
+            LAST_HASH=""
+          fi
+
+          if [ "$LAST_HASH" = "$LATEST_HASH" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "$LATEST_HASH" > "$HASH_FILE"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Save commit hash for future comparison
+        uses: actions/cache/save@v4
+        with:
+          path: .upstream_hash
+          key: upstream-hash-${{ env.LATEST_HASH }}
+
+      - name: Get latest release version
+        id: version
+        run: |
+          TAG=$(curl -s https://api.github.com/repos/qjfoidnh/BaiduPCS-Go/releases/latest | jq -r .tag_name)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+  build-image:
+    needs: check-upstream
+    if: needs.check-upstream.outputs.changed == 'true'
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      tag: ${{ needs.check-upstream.outputs.tag }}
