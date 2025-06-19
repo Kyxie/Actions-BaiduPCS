@@ -12,16 +12,10 @@ FROM alpine:3.20
 LABEL maintainer="Kyxie <github.com/Kyxie>" \
       description="Lightweight BaiduPCS-Go image"
 
-RUN adduser -D pcs
-
 COPY --from=downloader /usr/local/bin/BaiduPCS-Go /usr/local/bin/
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-USER pcs
-VOLUME ["/data", "/home/pcs/.config/BaiduPCS-Go"]
+VOLUME ["/data", "/root/.config/BaiduPCS-Go"]
 WORKDIR /data
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["sleep", "infinity"]
+ENTRYPOINT ["sleep"]
+CMD ["infinity"]
