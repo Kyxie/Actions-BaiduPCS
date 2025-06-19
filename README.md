@@ -11,13 +11,12 @@ GitHub Actions仓库：https://github.com/Kyxie/Actions-BaiduPCS.git
 #### 直接运行
 
 ```bash
-docker run -it \
-  --name baidupcs-go \
+docker run -d -it --name baidupcs-go \
+  -v $(pwd)/data:/data \
   -v $(pwd)/upload:/upload \
-  -v $(pwd)/pcs_config:/root/.config/BaiduPCS-Go \
+  -v $(pwd)/config:/root/.config/BaiduPCS-Go \
   -w /upload \
-  kyxie/baidupcs-go \
-  sleep infinity
+  kyxie/baidupcs-go:latest
 ```
 
 #### Docker Compose（推荐）
@@ -27,16 +26,23 @@ docker run -it \
 ```yml
 services:
   baidupcs-go:
-    image: kyxie/baidupcs-go
+    image: kyxie/baidupcs-go:latest
     container_name: baidupcs-go
+
     stdin_open: true
     tty: true
+
     volumes:
+      - ./data:/data
       - ./upload:/upload
-      - ./pcs_config:/root/.config/BaiduPCS-Go
+      - ./config:/root/.config/BaiduPCS-Go
+
     working_dir: /upload
-    command: sleep infinity
 ```
+
+#### 进入容器，登录，下载
+
+详见：[Debian使用Docker部署BaiduPCS Go | Kunyang's Blog](http://localhost:1313/zh/blog/tech/router/baidupcs-go/)
 
 ### Overview
 
@@ -48,20 +54,32 @@ services:
 
 #### Run directly
 
-```
-bashCopyEditdocker run -it \
-  --name baidupcs-go \
+```bash
+docker run -d -it --name baidupcs-go \
+  -v $(pwd)/data:/data \
   -v $(pwd)/upload:/upload \
-  -v $(pwd)/pcs_config:/root/.config/BaiduPCS-Go \
+  -v $(pwd)/config:/root/.config/BaiduPCS-Go \
   -w /upload \
-  kyxie/baidupcs-go \
-  sleep infinity
+  kyxie/baidupcs-go:latest
 ```
 
 #### Docker Compose (recommended)
 
-```
-docker-compose.yml
+```yml
+services:
+  baidupcs-go:
+    image: kyxie/baidupcs-go:latest
+    container_name: baidupcs-go
+
+    stdin_open: true
+    tty: true
+
+    volumes:
+      - ./data:/data
+      - ./upload:/upload
+      - ./config:/root/.config/BaiduPCS-Go
+
+    working_dir: /uploaddocker-compose.yml
 yamlCopyEditservices:
   baidupcs-go:
     image: kyxie/baidupcs-go
@@ -74,3 +92,7 @@ yamlCopyEditservices:
     working_dir: /upload
     command: sleep infinity
 ```
+
+#### Interactive Mode, Login and Download
+
+See: [Deploying BaiduPCS-Go with Docker on Debian | Kunyang's Blog](http://localhost:1313/zh/blog/tech/router/baidupcs-go/)
