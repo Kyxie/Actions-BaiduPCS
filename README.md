@@ -37,3 +37,40 @@ services:
     working_dir: /upload
     command: sleep infinity
 ```
+
+### Overview
+
+- **Source repository:** https://github.com/qjfoidnh/BaiduPCS-Go.git
+- **GitHub Actions repository:** https://github.com/Kyxie/Actions-BaiduPCS.git
+- **Reference tutorial:** [Deploying BaiduPCS-Go with Docker on Debian | Kunyang's Blog](http://localhost:1313/zh/blog/tech/router/baidupcs-go/)
+
+### Running the Container
+
+#### Run directly
+
+```
+bashCopyEditdocker run -it \
+  --name baidupcs-go \
+  -v $(pwd)/upload:/upload \
+  -v $(pwd)/pcs_config:/root/.config/BaiduPCS-Go \
+  -w /upload \
+  kyxie/baidupcs-go \
+  sleep infinity
+```
+
+#### Docker Compose (recommended)
+
+```
+docker-compose.yml
+yamlCopyEditservices:
+  baidupcs-go:
+    image: kyxie/baidupcs-go
+    container_name: baidupcs-go
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./upload:/upload
+      - ./pcs_config:/root/.config/BaiduPCS-Go
+    working_dir: /upload
+    command: sleep infinity
+```
