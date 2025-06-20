@@ -2,24 +2,35 @@ name: Check upstream
 
 on:
   schedule:
-    - cron: '0 1 * * *'        # 每天 01:00 UTC
-  workflow_dispatch:            # 手动触发
+    - cron: '0 1 * * *'          # 每天 01:00 UTC 检测一次
+  workflow_dispatch:             # 手动触发
 
 jobs:
   check-upstream:
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.check.outputs.changed }}
+      changed: ${{ steps.compare.outputs.changed }}
       tag:     ${{ steps.version.outputs.tag }}
 
     steps:
-      - name: Get latest upstream commit hash
+      # 1. 取回上一次缓存的 commit 哈希（没有就跳过）
+      - name: Restore last upstream hash
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .upstream_hash
+          key: upstream-hash-*
+
+      # 2. 获取 main 分支最新 commit 哈希
+      - name: Get latest upstream commit
         run: |
-          git ls-remote https://github.com/qjfoidnh/BaiduPCS-Go.git refs/heads/main | cut -f1 > latest_hash.txt
+          git ls-remote https://github.com/qjfoidnh/BaiduPCS-Go.git \
+            refs/heads/main | cut -f1 > latest_hash.txt
           echo "LATEST_HASH=$(cat latest_hash.txt)" >> $GITHUB_ENV
 
+      # 3. 与上次记录对比
       - name: Compare with last recorded hash
-        id: check
+        id: compare
         run: |
           HASH_FILE=".upstream_hash"
           if [ -f "$HASH_FILE" ]; then
@@ -35,24 +46,21 @@ jobs:
             echo "changed=true"  >> $GITHUB_OUTPUT
           fi
 
-      - name: Save commit hash for future comparison
+      # 4. 仅在检测到变化时保存新哈希
+      - name: Save commit hash
+        if: steps.compare.outputs.changed == 'true'
         uses: actions/cache/save@v4
         with:
           path: .upstream_hash
           key: upstream-hash-${{ env.LATEST_HASH }}
 
-      - name: Get latest release version
+      # 5. 读取 upstream 最新 release tag（用作镜像版本）
+      - name: Get latest release tag
         id: version
         run: |
-          TAG=$(curl -s https://api.github.com/repos/qjfoidnh/BaiduPCS-Go/releases/latest | jq -r .tag_name)
+          TAG=$(curl -s https://api.github.com/repos/qjfoidnh/BaiduPCS-Go/releases/latest \
+            | jq -r .tag_name)
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-  build-image:
-    needs: check-upstream
-    if: needs.check-upstream.outputs.changed == 'true'
-    uses: ./.github/workflows/docker-build.yml        # 复用流程
-    with:
-      tag: ${{ needs.check-upstream.outputs.tag }}
-    secrets:                                         # 显式传递secret
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  # 6. 只有 changed == true 时复用构建工作流
+  build
