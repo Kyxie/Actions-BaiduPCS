@@ -4,6 +4,8 @@
 
 GitHub Actions仓库：https://github.com/Kyxie/Actions-BaiduPCS.git
 
+DockerHub仓库：https://hub.docker.com/r/kyxie/baidupcs-go
+
 参考：[Debian使用Docker部署BaiduPCS Go | Kunyang's Blog](http://localhost:1313/zh/blog/tech/router/baidupcs-go/)
 
 ### 运行容器
@@ -48,6 +50,7 @@ services:
 
 - **Source repository:** https://github.com/qjfoidnh/BaiduPCS-Go.git
 - **GitHub Actions repository:** https://github.com/Kyxie/Actions-BaiduPCS.git
+- **Docker Hub repository:** https://hub.docker.com/r/kyxie/baidupcs-go
 - **Reference tutorial:** [Deploying BaiduPCS-Go with Docker on Debian | Kunyang's Blog](http://localhost:1313/zh/blog/tech/router/baidupcs-go/)
 
 ### Running the Container
