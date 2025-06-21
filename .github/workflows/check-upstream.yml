@@ -63,4 +63,12 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
   # 6. 只有 changed == true 时复用构建工作流
-  build
+  build-image:
+    needs: check-upstream
+    if: needs.check-upstream.outputs.changed == 'true'
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      tag: ${{ needs.check-upstream.outputs.tag }}
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
