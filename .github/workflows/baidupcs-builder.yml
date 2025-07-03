@@ -1,16 +1,12 @@
-name: Docker Build
+name: BaiduPCS Builder
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       tag:
+        description: "BaiduPCS-Go version tag"
         required: true
         type: string
-    secrets:
-      DOCKER_USERNAME:
-        required: true
-      DOCKER_PASSWORD:
-        required: true
 
 jobs:
   build:
