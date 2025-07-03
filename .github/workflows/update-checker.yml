@@ -2,9 +2,11 @@ name: Update Checker
 
 env:
   REPO_URL: https://github.com/qjfoidnh/BaiduPCS-Go
-  REPO_BRANCH: master
+  REPO_BRANCH: main
 
 on:
+  schedule:
+    - cron: '0 1 1 * *'
   workflow_dispatch:
 
 jobs:
