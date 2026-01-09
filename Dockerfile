@@ -1,10 +1,12 @@
 # ---------- build stage ----------
 FROM golang:1.23-alpine AS builder
 
-WORKDIR /src
-COPY . .
+ARG BPCS_VER
+WORKDIR /build
 
-RUN go mod download \
+RUN apk add --no-cache git
+RUN git clone --branch ${BPCS_VER} --depth 1 https://github.com/qjfoidnh/BaiduPCS-Go.git . \
+    && go mod download \
     && CGO_ENABLED=0 go build -ldflags="-s -w" -o BaiduPCS-Go main.go
 
 # ---------- runtime stage ----------
@@ -14,7 +16,7 @@ LABEL maintainer="Kyxie <github.com/Kyxie>" \
 
 RUN apk add --no-cache ca-certificates mailcap tzdata
 
-COPY --from=builder /src/BaiduPCS-Go /usr/local/bin/
+COPY --from=builder /build/BaiduPCS-Go /usr/local/bin/
 
 VOLUME ["/data", "/root/.config/BaiduPCS-Go"]
 WORKDIR /data
