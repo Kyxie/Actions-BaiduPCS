@@ -1,21 +1,23 @@
 # ---------- build stage ----------
-FROM alpine:3.20 AS downloader
+FROM golang:1.23-alpine AS builder
 
-ARG BPCS_VER=v3.9.7
-RUN apk add --no-cache curl unzip ca-certificates \
- && curl -L -o /tmp/bpcs.zip \
-      https://github.com/qjfoidnh/BaiduPCS-Go/releases/download/${BPCS_VER}/BaiduPCS-Go-${BPCS_VER}-linux-amd64.zip \
- && unzip -j /tmp/bpcs.zip '*/BaiduPCS-Go' -d /usr/local/bin
+WORKDIR /src
+RUN apk add --no-cache git
+
+RUN git clone https://github.com/qjfoidnh/BaiduPCS-Go.git . \
+    && go mod download \
+    && go build -o BaiduPCS-Go main.go
 
 # ---------- runtime stage ----------
 FROM alpine:3.20
 LABEL maintainer="Kyxie <github.com/Kyxie>" \
       description="Lightweight BaiduPCS-Go image"
 
-COPY --from=downloader /usr/local/bin/BaiduPCS-Go /usr/local/bin/
+RUN apk add --no-cache ca-certificates mailcap
+COPY --from=builder /src/BaiduPCS-Go /usr/local/bin/
 
 VOLUME ["/data", "/root/.config/BaiduPCS-Go"]
 WORKDIR /data
 
-ENTRYPOINT ["sleep"]
-CMD ["infinity"]
+ENTRYPOINT ["/usr/local/bin/BaiduPCS-Go"]
+CMD ["daemon"]

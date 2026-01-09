@@ -3,9 +3,10 @@ name: BaiduPCS Builder
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: "BaiduPCS-Go version tag"
-        required: true
+      version_label:
+        description: "Docker tag (e.g., latest, dev, or commit hash)"
+        required: false
+        default: "latest"
         type: string
 
 jobs:
@@ -30,11 +31,8 @@ jobs:
         with:
           context: .
           push: true
-          build-args: |
-            BPCS_VER=${{ inputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/baidupcs-go:${{ inputs.tag }}
+            ${{ secrets.DOCKER_USERNAME }}/baidupcs-go:${{ inputs.version_label }}
             ${{ secrets.DOCKER_USERNAME }}/baidupcs-go:latest
-
-      - name: Docker logout
-        run: docker logout
