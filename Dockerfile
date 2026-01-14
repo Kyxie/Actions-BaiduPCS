@@ -22,4 +22,4 @@ VOLUME ["/data", "/root/.config/BaiduPCS-Go"]
 WORKDIR /data
 
 ENTRYPOINT ["/usr/local/bin/BaiduPCS-Go"]
-CMD ["daemon"]
+CMD ["web"]
