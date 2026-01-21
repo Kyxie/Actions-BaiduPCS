@@ -2,7 +2,7 @@ name: BaiduPCS Update Checker
 
 on:
   schedule:
-    - cron: '0 10 * * *'
+    - cron: "0 10 * * *"
   workflow_dispatch:
 
 permissions:
@@ -24,13 +24,14 @@ jobs:
         id: cacheTag
         uses: actions/cache@v3
         with:
-          path: .last_release_tag
-          key: release_tag_${{ steps.getTag.outputs.tag }}
+          path: baidupcs/.last_release_tag
+          key: baidupcs_release_tag_${{ steps.getTag.outputs.tag }}
 
       - name: Save New Tag
         if: steps.cacheTag.outputs.cache-hit != 'true'
         run: |
-          echo ${{ steps.getTag.outputs.tag }} | tee .last_release_tag
+          mkdir -p baidupcs
+          echo ${{ steps.getTag.outputs.tag }} | tee baidupcs/.last_release_tag
 
       - name: Trigger Build
         if: steps.cacheTag.outputs.cache-hit != 'true'

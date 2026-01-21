@@ -55,6 +55,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY_IMAGE }}:${{ inputs.docker_tag }}
             ${{ env.REGISTRY_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=filecodebox
+          cache-to: type=gha,mode=max,scope=filecodebox
           provenance: false

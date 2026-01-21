@@ -29,10 +29,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./baidupcs.Dockerfile
+          file: baidupcs/Dockerfile
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=baidupcs
+          cache-to: type=gha,mode=max,scope=baidupcs
           build-args: |
             BPCS_VER=${{ inputs.tag }}
           tags: |
