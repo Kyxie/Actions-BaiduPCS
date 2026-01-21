@@ -41,7 +41,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'filecodebox-builder.yml', 
-              ref: 'master',
+              ref: context.ref,
               inputs: {
                 version: '${{ steps.getTag.outputs.tag }}'
               }
