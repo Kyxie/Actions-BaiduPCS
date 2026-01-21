@@ -1,0 +1,48 @@
+name: BaiduPCS Update Checker
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Latest Release Tag
+        id: getTag
+        run: |
+          latest_tag=$(curl -s https://api.github.com/repos/qjfoidnh/BaiduPCS-Go/releases/latest | jq -r .tag_name)
+          echo "Latest Release: $latest_tag"
+          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Compare Tag
+        id: cacheTag
+        uses: actions/cache@v3
+        with:
+          path: .last_release_tag
+          key: release_tag_${{ steps.getTag.outputs.tag }}
+
+      - name: Save New Tag
+        if: steps.cacheTag.outputs.cache-hit != 'true'
+        run: |
+          echo ${{ steps.getTag.outputs.tag }} | tee .last_release_tag
+
+      - name: Trigger Build
+        if: steps.cacheTag.outputs.cache-hit != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'baidupcs-builder.yml',
+              ref: 'main',
+              inputs: {
+                tag: '${{ steps.getTag.outputs.tag }}'
+              }
+            })
