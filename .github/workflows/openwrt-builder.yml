@@ -3,6 +3,11 @@ name: OpenWrt Builder
 on:
   repository_dispatch:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "openwrt/**"
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
@@ -15,6 +20,10 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: America/Toronto
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
