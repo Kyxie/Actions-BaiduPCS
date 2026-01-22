@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     build-essential libncurses5-dev libncursesw5-dev \
-    git python3 python3-pip python3-distutils gawk curl wget unzip file \
+    git python3 gawk curl wget unzip file \
     sudo time rsync \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

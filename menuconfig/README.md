@@ -4,7 +4,7 @@ A Docker environment designed for generating OpenWrt `.config` files. It saves y
 
 - Pre-cloned LEDE source code and updated feeds
 - Slim image size (< 300MB)
-- Generate `.config` to `openwrt/` directory
+- Generate `.config`
 
 ## How to run
 
@@ -13,7 +13,7 @@ A Docker environment designed for generating OpenWrt `.config` files. It saves y
   ```bash
   docker run --rm -it \
     -v $(pwd)/openwrt:/mnt/output \
-    kyxie/lede-config:latest \
+    kyxie/menuconfig:latest \
     bash -c "[ -f /mnt/output/.config ] && cp /mnt/output/.config .config; make menuconfig && cp .config /mnt/output/.config"
   ```
 
