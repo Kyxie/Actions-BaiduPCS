@@ -1,4 +1,4 @@
-name: LEDE Config Generator
+name: Menuconfig Generator
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "lede-config/Dockerfile"
+      - "menuconfig/Dockerfile"
 
 jobs:
   build:
@@ -28,10 +28,10 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
-          context: ./lede-config
-          file: ./lede-config/Dockerfile
+          context: ./menuconfig
+          file: ./menuconfig/Dockerfile
           push: true
-          cache-from: type=gha,scope=lede-config
-          cache-to: type=gha,mode=max,scope=lede-config
+          cache-from: type=gha,scope=menuconfig
+          cache-to: type=gha,mode=max,scope=menuconfig
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/lede-config:latest
+            ${{ secrets.DOCKER_USERNAME }}/menuconfig:latest
