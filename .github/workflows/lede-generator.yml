@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "lede-config/**"
+      - "lede-config/Dockerfile"
 
 jobs:
   build:
