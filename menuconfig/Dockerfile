@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     build-essential libncurses5-dev libncursesw5-dev \
-    git python3 python3-pip gawk curl wget unzip file \
+    git python3 python3-pip python3-distutils gawk curl wget unzip file \
     sudo time rsync \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -14,10 +14,10 @@ RUN useradd -m -s /bin/bash builduser && \
 
 USER builduser
 WORKDIR /home/builduser
+RUN git clone --depth 1 https://github.com/coolsnowwolf/lede.git openwrt-source
 
-RUN git clone --depth 1 https://github.com/coolsnowwolf/lede.git openwrt-source && \
-    cd openwrt-source && \
-    ./scripts/feeds update -a && \
+WORKDIR /home/builduser/openwrt-source
+RUN ./scripts/feeds update -a || true && \
     ./scripts/feeds install -a && \
     rm -rf .git && \
     rm -rf feeds/*/.git
