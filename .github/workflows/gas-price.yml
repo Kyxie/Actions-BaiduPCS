@@ -14,8 +14,10 @@ permissions:
 jobs:
   run-gas-price-script:
     runs-on: ubuntu-latest
-
     environment: Gas price
+    defaults:
+      run:
+        working-directory: ./gas-price
 
     steps:
       - uses: actions/checkout@v4
@@ -37,4 +39,4 @@ jobs:
           USERS_JSON: ${{ vars.USERS }}
           ENABLE_EMAIL: ${{ vars.ENABLE_EMAIL }}
 
-        run: python ./main.py
+        run: python main.py
