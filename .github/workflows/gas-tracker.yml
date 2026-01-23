@@ -1,4 +1,4 @@
-name: Gas Price
+name: Gas Price Tracker
 
 on:
   push:
