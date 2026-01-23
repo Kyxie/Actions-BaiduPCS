@@ -36,7 +36,7 @@ jobs:
         env:
           SENDER_EMAIL: ${{ secrets.USERNAME }}
           SENDER_PASS: ${{ secrets.PASSWORD }}
-          USERS_JSON: ${{ vars.USERS }}
+          USERS: ${{ vars.USERS }}
           ENABLE_EMAIL: ${{ vars.ENABLE_EMAIL }}
 
         run: python main.py
