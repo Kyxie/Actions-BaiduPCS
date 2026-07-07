@@ -122,17 +122,62 @@ def fetch_citynews(city: str) -> GasReport | None:
     return None
 
 # ── gaswizard.ca scraper (curl_cffi — bypasses bot protection) ────────────────
+#
+# Each <li> is one day. A fuel's price block renders in one of two shapes:
+#   unchanged: <span class="fuel-price-value">162.9</span>  <span class="price-direction pd-nc"> --- </span>
+#   changed:   192.9 <!--span ...--><div class="price-direction pd-down"><span class="price-text">-4¢</span><svg>...
+# Regular's price is wrapped in fuel-price-value; Premium/Diesel's is bare — both optional in the regex.
 
-_GASWIZARD_REGU = re.compile(
-    r"Regular<\/div><div class=\"fuelprice\">(\d{3}\.\d)\s*"
-    r"\(<span class=\"price-direction (?:pd-nc|pd-up|pd-down)\">(\+?\-?\d*¢|n\/c)<\/span>\)"
-)
-_GASWIZARD_PREM = re.compile(
-    r"Premium<\/div><div class=\"fuelprice\">(\d{3}\.\d)\s*"
-    r"\(<span class=\"price-direction (?:pd-nc|pd-up|pd-down)\">(\+?\-?\d*¢|n\/c)<\/span>\)"
-)
-_GASWIZARD_DAY  = re.compile(r"Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday")
-_GASWIZARD_DATE = re.compile(r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},\s\d{4}")
+_GASWIZARD_LI       = re.compile(r"<li>(.*?)</li>", re.S)
+_GASWIZARD_DAYTEXT  = re.compile(r'<span class="daytext">([^<]+)</span>')
+_GASWIZARD_DATETEXT = re.compile(r'<span class="datetext">([^<]+)</span>')
+_GASWIZARD_PREM_LINK = re.compile(r'<a id="link-premium" href="([^"#]+)')
+
+
+def _gaswizard_fuel_pattern(fuel: str) -> re.Pattern:
+    return re.compile(
+        r'<div class="fueltitle">' + re.escape(fuel) + r'</div>'
+        r'<div class="fuelprice">'
+        r'(?:<span class="fuel-price-value">)?(\d{3}\.\d)(?:</span>)?\s*'
+        r'(?:<span class="price-direction pd-\w+">\s*([^<]*?)\s*</span>'
+        r'|<!--.*?-->\s*<div class="price-direction pd-\w+"><span class="price-text">([^<]*)</span>)',
+        re.S,
+    )
+
+
+_GASWIZARD_REGULAR_RE = _gaswizard_fuel_pattern("Regular")
+_GASWIZARD_PREMIUM_RE = _gaswizard_fuel_pattern("Premium")
+
+
+def _norm_gaswizard_change(raw: str | None) -> str:
+    if not raw:
+        return "n/c"
+    raw = raw.strip()
+    if not raw or set(raw) <= {"-"}:
+        return "n/c"
+    return raw.replace(" ", "")
+
+
+def _parse_gaswizard_fuel(snippet: str, fuel_re: re.Pattern) -> list[tuple[str, str, str, str]]:
+    results = []
+    for li in _GASWIZARD_LI.findall(snippet):
+        day_m = _GASWIZARD_DAYTEXT.search(li)
+        date_m = _GASWIZARD_DATETEXT.search(li)
+        price_m = fuel_re.search(li)
+        if not (day_m and date_m and price_m):
+            continue
+        change = _norm_gaswizard_change(price_m.group(2) or price_m.group(3))
+        results.append((day_m.group(1), date_m.group(1), price_m.group(1), change))
+    return results
+
+
+def _fetch_gaswizard_snippet(url: str) -> str | None:
+    r = curl_req.get(url, impersonate="chrome124", timeout=20)
+    r.raise_for_status()
+    start = re.search(r'class="single-city-prices', r.text)
+    if not start:
+        return None
+    return r.text[start.start(): start.start() + 6000]
 
 
 def fetch_gaswizard(city: str) -> GasReport | None:
@@ -140,45 +185,49 @@ def fetch_gaswizard(city: str) -> GasReport | None:
         return None
 
     slug = city.lower().replace(" ", "-")
-    url = f"{GASWIZARD_URL}{slug}"
+    regular_url = f"{GASWIZARD_URL}{slug}"
 
     try:
-        r = curl_req.get(url, impersonate="chrome124", timeout=20)
-        r.raise_for_status()
-        html = r.text
+        regular_snippet = _fetch_gaswizard_snippet(regular_url)
     except Exception as e:
         print(f"  gaswizard.ca error: {e}")
         return None
 
-    start = re.search(r'class="single-city-prices', html)
-    if not start:
+    if not regular_snippet:
         print("  gaswizard.ca: price block not found")
         return None
 
-    snippet = html[start.start(): start.start() + 6000]
-    days_found  = _GASWIZARD_DAY.findall(snippet)
-    dates_found = _GASWIZARD_DATE.findall(snippet)
-    regus       = _GASWIZARD_REGU.findall(snippet)
-    prems       = _GASWIZARD_PREM.findall(snippet)
-
-    if not (days_found and dates_found and regus):
+    regulars = _parse_gaswizard_fuel(regular_snippet, _GASWIZARD_REGULAR_RE)
+    if not regulars:
         print("  gaswizard.ca: incomplete data")
         return None
+
+    # The premium/diesel page slug doesn't always match the regular page's slug
+    # (e.g. "vancouver" -> "vancouver-gas-prices"), so follow the embedded link.
+    premiums_by_date = {}
+    link_m = _GASWIZARD_PREM_LINK.search(regular_snippet)
+    if link_m:
+        try:
+            premium_snippet = _fetch_gaswizard_snippet(link_m.group(1))
+            if premium_snippet:
+                for _, date, price, change in _parse_gaswizard_fuel(premium_snippet, _GASWIZARD_PREMIUM_RE):
+                    premiums_by_date[date] = (price, change)
+        except Exception as e:
+            print(f"  gaswizard.ca premium fetch error: {e}")
 
     today_str, _ = _today_tomorrow()
 
     day_prices = []
-    for day, date, regu, prem in zip(days_found, dates_found, regus, prems):
-        label = day
-        if date == today_str:
-            label = "Today"
+    for day, date, regu_price, regu_change in regulars:
+        label = "Today" if date == today_str else day
+        prem_price, prem_change = premiums_by_date.get(date, ("", ""))
         day_prices.append(DayPrice(
             label=label,
             date=date,
-            regular=regu[0],
-            regular_change=regu[1],
-            premium=prem[0],
-            premium_change=prem[1],
+            regular=regu_price,
+            regular_change=regu_change,
+            premium=prem_price,
+            premium_change=prem_change,
         ))
 
     try:
@@ -187,7 +236,7 @@ def fetch_gaswizard(city: str) -> GasReport | None:
         pass
 
     print("  Source: gaswizard.ca [OK]")
-    return GasReport(city=city.title(), days=day_prices, source_url=url)
+    return GasReport(city=city.title(), days=day_prices, source_url=regular_url)
 
 
 def fetch_gas_report(city: str) -> GasReport | None:
