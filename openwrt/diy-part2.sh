@@ -1,36 +1,64 @@
 #!/bin/bash
 
-# # Modify default IP
-# sed -i "/uci commit system/a\uci commit network" package/lean/default-settings/files/zzz-default-settings
+# Modify default IP and network architecture for main router
 sed -i "/uci commit network/i\uci set network.lan.proto='static'" package/lean/default-settings/files/zzz-default-settings
-sed -i "/uci commit network/i\uci set network.lan.type='bridge'" package/lean/default-settings/files/zzz-default-settings
-sed -i "/uci commit network/i\uci set network.lan.ifname='eth0'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit network/i\uci set network.lan.ipaddr='192.168.0.1'" package/lean/default-settings/files/zzz-default-settings
 sed -i "/uci commit network/i\uci set network.lan.netmask='255.255.255.0'" package/lean/default-settings/files/zzz-default-settings
-sed -i "/uci commit network/i\uci set network.lan.gateway='10.0.0.1'" package/lean/default-settings/files/zzz-default-settings
-sed -i "/uci commit network/i\uci set network.lan.dns='10.0.0.1'" package/lean/default-settings/files/zzz-default-settings
 
-# # Disable DHCP
-# sed -i "/uci commit network/a\uci commit dhcp" package/lean/default-settings/files/zzz-default-settings
-# sed -i "/uci commit network/a\uci set dhcp.lan.ignore='1'" package/lean/default-settings/files/zzz-default-settings
-# sed -i "/uci commit network/a\uci set dhcp.lan.interface='lan'" package/lean/default-settings/files/zzz-default-settings
+# Append dhcp commit block right after network commit block to create the anchor
+sed -i "/uci commit network/a\uci commit dhcp" package/lean/default-settings/files/zzz-default-settings
 
+# Configure dynamic allocation parameters and shift port for AdGuard Home
+sed -i "/uci commit dhcp/i\uci set dhcp.lan.interface='lan'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.lan.start='100'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.lan.limit='150'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.lan.leasetime='12h'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@dnsmasq[0].port='5353'" package/lean/default-settings/files/zzz-default-settings
 
-# Modify default theme
-# sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+# Bind static IP and custom hostname for miniPC
+sed -i "/uci commit dhcp/i\uci add dhcp host" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].name='miniPC'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].mac='68:1d:ef:41:17:5b'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].ip='192.168.0.2'" package/lean/default-settings/files/zzz-default-settings
 
-# Modify hostname
+# Bind static IP and custom hostname for windows
+sed -i "/uci commit dhcp/i\uci add dhcp host" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].name='windows'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].mac='04:7c:16:c6:44:3c'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].ip='192.168.0.3'" package/lean/default-settings/files/zzz-default-settings
+
+# Bind static IP and custom hostname for rpi
+sed -i "/uci commit dhcp/i\uci add dhcp host" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].name='rpi'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].mac='AA:BB:CC:DD:EE:04'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].ip='192.168.0.4'" package/lean/default-settings/files/zzz-default-settings
+
+# Bind static IP and custom hostname for macmini
+sed -i "/uci commit dhcp/i\uci add dhcp host" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].name='macmini'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].mac='AA:BB:CC:DD:EE:05'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].ip='192.168.0.5'" package/lean/default-settings/files/zzz-default-settings
+
+# Bind static IP and custom hostname for macbookair
+sed -i "/uci commit dhcp/i\uci add dhcp host" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].name='macbookair'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].mac='ba:03:9e:e8:d8:a9'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit dhcp/i\uci set dhcp.@host[-1].ip='192.168.0.6'" package/lean/default-settings/files/zzz-default-settings
+
+# Modify hostname and timezone settings to Toronto Eastern Time
 sed -i "/uci commit system/i\uci set system.@system[0].hostname='KyxieWrt'" package/lean/default-settings/files/zzz-default-settings
-
-# # Modify default language
-# sed -i "/uci commit system/a\uci commit luci" package/lean/default-settings/files/zzz-default-settings
-# sed -i "/uci commit system/a\uci set luci.main.lang='en'" package/lean/default-settings/files/zzz-default-settings
-
-# Set timezone to Toronto (Eastern Time)
 sed -i "s/set system\.@system\[0\]\.timezone='CST-8'/set system.@system[0].timezone='EST5EDT'/" package/lean/default-settings/files/zzz-default-settings
 sed -i "s/set system\.@system\[0\]\.zonename='Asia\/Shanghai'/set system.@system[0].zonename='America\/Toronto'/" package/lean/default-settings/files/zzz-default-settings
 
-# Modify NTP Server
-sed -i "s/ntp1.aliyun.com/time.google.com/" package/lean/default-settings/files/zzz-default-settings
-sed -i "s/ntp.tencent.com/time.windows.com/" package/lean/default-settings/files/zzz-default-settings
-sed -i "s/ntp.ntsc.ac.cn/0.ca.pool.ntp.org/" package/lean/default-settings/files/zzz-default-settings
-sed -i "s/time.apple.com/1.ca.pool.ntp.org/" package/lean/default-settings/files/zzz-default-settings
+# Rebuild NTP servers to completely utilize Canada pool and mainstream sources
+sed -i '/uci commit system/i\uci delete system.ntp.server' package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit system/i\uci add_list system.ntp.server='0.ca.pool.ntp.org'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit system/i\uci add_list system.ntp.server='1.ca.pool.ntp.org'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit system/i\uci add_list system.ntp.server='time.google.com'" package/lean/default-settings/files/zzz-default-settings
+sed -i "/uci commit system/i\uci add_list system.ntp.server='time.cloudflare.com'" package/lean/default-settings/files/zzz-default-settings
+
+# Optimize system file descriptors and TCP reuse limits
+sed -i '/customized in this file/a fs.file-max=102400\nnet.ipv4.tcp_tw_reuse=1' package/base-files/files/etc/sysctl.conf
+
+# Set Argon as default theme
+sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
